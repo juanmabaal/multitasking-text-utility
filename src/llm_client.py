@@ -3,63 +3,78 @@ import os, json
 from  typing import Any
 from dotenv import load_dotenv
 from openai import OpenAI
+from schema import SupportResponse
 
 def get_client_and_model() -> tuple[OpenAI, str]:
     load_dotenv()
     api_key = os.getenv('OPENAI_API_KEY')
-    print(api_key)
     if not api_key:
         raise RuntimeError('OPENAI_API_KEY no esta definida en el archivo .env')
 
     return OpenAI(api_key=api_key), os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
 
 
-def get_support_response(user_question: str) -> dict:
+def get_support_response(user_question: str) -> dict[str, Any]:
     client, model = get_client_and_model()
     system_prompt = """ 
         Eres un agente senior de seniors de soporte al cliente, experimentado con mas de 15 años de experperiencia. Te encargas de darle respuestas experimentadas a las solicitudes, quejas, y reclamos de los clientes.
     """
 
-    prompt = """ 
-        Eres un agente de soporte:
+    prompt = f"""
+            Analiza la solicitud del cliente y clasifícala según los campos requeridos.
 
-        Evalua la pregunta del cliente y evalua su contenido:
-        - categoty: Que es lo que el cliente necesita? A que categoria de estas: 'billing', 'technical', 'account', 'subscription', 'payment', 'refund', 'login', 'bug', 'feature_request', 'cancellation', 'general' => es el tipo de pregunta del cliente?
-        - priority: Cual es el nivel de prioridad de la pregunta o solicitud.
-        - answer: da una respuesta profesional y formal al cliente
-        - actions: lista de acciones de pasos que el cliente debe seguir resolver, de 3 a 4 acciones
-        - status: si puede ser resuelta por cliente o necesita una revision tecnica para darle solucion al cliente
-        - confidences: para el portenzaje de consianza de cada item retorna un puntaje de calificacion de la salida de 0 a 1
+            Reglas:
+            - "category" debe ser una de las siguientes:
+            "billing", "technical", "account", "subscription", "payment", "refund",
+            "login", "bug", "feature_request", "cancellation", "general"
+            - "priority" debe ser una de: "low", "medium", "high"
+            - "answer" debe ser profesional, concisa y útil
+            - "actions" debe contener de 3 a 4 pasos claros que el cliente debe seguir
+            - "status" debe ser uno de:
+            "auto_resolved" o "needs_human_review"
+            - "confidences" debe proporcionar un puntaje de confianza entre 0.0 y 1.0 para:
+            "category", "priority", "answer", "actions" y "status"
 
-        Devuelve siempre un JSON con la siguiente estructura:
-        {{
-            'confidences': {{
-                'categoty': 0,
-                'priority': 0,
-                'answer': 0,
-                'actions': 0,
-                'status': 0
-            }},
-            'category': 'billing'| 'technical'| 'account'| 'subscription'| 'payment'| 'refund'| 'login'| 'bug'| 'feature_request'| 'cancellation'| 'general',
-            "priority": "low | medium | high",
-            "answer": "string",
-            "actions": ["string"],
-            "status": "auto_resolved | needs_human_review"
-        }}
+            Devuelve SOLO JSON válido con la siguiente estructura exacta:
 
-        user_question:
-        {user_question}
-    """
+            {{
+            "support_output": {{
+                "confidences": {{
+                "category": 0.9,
+                "priority": 0.8,
+                "answer": 0.95,
+                "actions": 0.85,
+                "status": 0.9
+                }},
+                "category": "general",
+                "priority": "medium",
+                "answer": "Texto de respuesta profesional",
+                "actions": [
+                "Primera acción",
+                "Segunda acción",
+                "Tercera acción"
+                ],
+                "status": "needs_human_review"
+            }}
+            }}
+
+            Pregunta del cliente:
+            {user_question}
+            """
     response = client.chat.completions.create(
         model = model,
         response_format={'type': 'json_object'},
         messages = [
-            {'role': 'system', 'content': system_prompt},
-            {'role': 'user', 'content': prompt}
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt},
         ],
         temperature=0.2
     )
 
     content = response.choices[0].message.content
 
-    return json.loads(content)
+    parsed_content = json.loads(content)
+
+    validated_response = SupportResponse.model_validate(parsed_content)
+
+    return validated_response.model_dump()
