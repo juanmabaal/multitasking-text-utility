@@ -1,9 +1,10 @@
 # OpenAI client utilities for sending prompts and receiving structured responses.
-import os, json
+import os, json, time
 from  typing import Any
 from dotenv import load_dotenv
 from openai import OpenAI
 from schema import SupportResponse
+from metrics_logger import build_metrics
 
 def get_client_and_model() -> tuple[OpenAI, str]:
     load_dotenv()
@@ -61,6 +62,7 @@ def get_support_response(user_question: str) -> dict[str, Any]:
             Pregunta del cliente:
             {user_question}
             """
+    start_time = time.perf_counter()
     response = client.chat.completions.create(
         model = model,
         response_format={'type': 'json_object'},
@@ -70,6 +72,7 @@ def get_support_response(user_question: str) -> dict[str, Any]:
         ],
         temperature=0.2
     )
+    end_time = time.perf_counter()
 
     content = response.choices[0].message.content
 
@@ -77,4 +80,11 @@ def get_support_response(user_question: str) -> dict[str, Any]:
 
     validated_response = SupportResponse.model_validate(parsed_content)
 
-    return validated_response.model_dump()
+    output_dic =  validated_response.model_dump()
+
+    metrics = build_metrics(response, start_time,end_time, prompt, output_dic)
+
+    return {
+        "response": output_dic,
+        "metrics" : metrics
+    }
