@@ -1,22 +1,10 @@
-# OpenAI client utilities for sending prompts and receiving structured responses.
-import os, json, time
 from  typing import Any
-from dotenv import load_dotenv
-from openai import OpenAI
 from schema import SupportResponse
-from metrics_logger import build_metrics
-
-def get_client_and_model() -> tuple[OpenAI, str]:
-    load_dotenv()
-    api_key = os.getenv('OPENAI_API_KEY')
-    if not api_key:
-        raise RuntimeError('OPENAI_API_KEY no esta definida en el archivo .env')
-
-    return OpenAI(api_key=api_key), os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
+from openai_runner import call_json_and_build_metrics
 
 
 def get_initial_support_response(user_question: str) -> dict[str, Any]:
-    client, model = get_client_and_model()
+
     system_prompt = """ 
         Eres un agente senior de seniors de soporte al cliente, experimentado con mas de 15 años de experperiencia. Te encargas de darle respuestas experimentadas a las solicitudes, quejas, y reclamos de los clientes.
     """
@@ -92,34 +80,21 @@ def get_initial_support_response(user_question: str) -> dict[str, Any]:
             - "actions" debe contener de 3 a 4 pasos claros que el cliente debe seguir
             - "status" debe ser uno de:
             "auto_resolved" o "needs_human_review"
-            - "confidences" debe proporcionar un puntaje de confianza entre 0.0 y 1.0 para:
-            "category", "priority", "answer", "actions" y "status"
+          
             
             Genera salida en el mismo formato JSON.
             """
-    start_time = time.perf_counter()
-    response = client.chat.completions.create(
-        model = model,
-        response_format={'type': 'json_object'},
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt},
-        ],
-        temperature=0.2
-    )
-    end_time = time.perf_counter()
+    initial_response = call_json_and_build_metrics(system_prompt, prompt)
 
-    content = response.choices[0].message.content
-
-    parsed_content = json.loads(content)
-
-    validated_response = SupportResponse.model_validate(parsed_content)
+    validated_response = SupportResponse.model_validate(initial_response['response'])
 
     output_dic =  validated_response.model_dump()
 
-    metrics = build_metrics(response, start_time,end_time, prompt, output_dic)
 
     return {
-        "response": output_dic,
-        "metrics" : metrics
+        "Initial_response": output_dic,
+        "initial_metrics" : initial_response['metrics']
     }
+
+
+
