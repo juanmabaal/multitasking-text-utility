@@ -3,20 +3,20 @@
 from pydantic import BaseModel, Field
 from typing import  List, Literal, Annotated
 
-confidence_score = Annotated[float, Field(..., ge= 0.0, le= 1.0)]
+# confidence_score = Annotated[float, Field(..., ge= 0.0, le= 1.0)]
 
-class FieldConfidences(BaseModel):
-    category: confidence_score
-    priority: confidence_score
-    answer: confidence_score
-    actions: confidence_score
-    status: confidence_score
+# class FieldConfidences(BaseModel):
+#     category: confidence_score
+#     priority: confidence_score
+#     answer: confidence_score
+#     actions: confidence_score
+#     status: confidence_score
 
 class SupportOutput (BaseModel):
-    confidences: FieldConfidences  = Field(
-        ...,
-        description = 'Mapa de confianza para cada campo'
-    )
+    # confidences: FieldConfidences  = Field(
+    #     ...,
+    #     description = 'Mapa de confianza para cada campo'
+    # )
     category: Literal[
         "billing",
         "technical",

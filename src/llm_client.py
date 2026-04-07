@@ -15,14 +15,73 @@ def get_client_and_model() -> tuple[OpenAI, str]:
     return OpenAI(api_key=api_key), os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
 
 
-def get_support_response(user_question: str) -> dict[str, Any]:
+def get_initial_support_response(user_question: str) -> dict[str, Any]:
     client, model = get_client_and_model()
     system_prompt = """ 
         Eres un agente senior de seniors de soporte al cliente, experimentado con mas de 15 años de experperiencia. Te encargas de darle respuestas experimentadas a las solicitudes, quejas, y reclamos de los clientes.
     """
 
     prompt = f"""
-            Analiza la solicitud del cliente y clasifícala según los campos requeridos.
+
+            Ejemplo #1: Billing / Cobro incorrecto
+            ###input: Me están cobrando dos veces la suscripción este mes, ¿qué está pasando?
+            Respuesta esperada:
+                {{
+                    "support_output": {{
+                        "category": "billing",
+                        "priority": "high",
+                        "answer": "Lamentamos el inconveniente con los cobros duplicados. Este tipo de situación puede ocurrir por errores de facturación o renovaciones superpuestas. Vamos a ayudarte a solucionarlo lo antes posible.",
+                        "actions": [
+                        "Verifica en tu estado de cuenta los cargos duplicados y sus fechas.",
+                        "Confirma si realizaste cambios recientes en tu suscripción.",
+                        "Contacta a soporte con los detalles de los cobros para iniciar la revisión.",
+                        "Monitorea tu cuenta en las próximas 24 horas mientras se procesa la corrección."
+                        ],
+                        "status": "needs_human_review"
+                    }}
+                }}
+
+            Ejemplo # 2: Login / Acceso a cuenta
+            ###input: No puedo iniciar sesión, me dice que mi contraseña es incorrecta aunque estoy seguro que es la misma.
+            Respuesta esperada:
+            {{
+                "support_output": {{
+                    "category": "login",
+                    "priority": "medium",
+                    "answer": "Entendemos la frustración al no poder acceder a tu cuenta. Este problema puede estar relacionado con credenciales incorrectas o bloqueos temporales por seguridad.",
+                    "actions": [
+                    "Intenta restablecer tu contraseña utilizando la opción 'Olvidé mi contraseña'.",
+                    "Verifica que no tengas activado el bloqueo de mayúsculas al escribir.",
+                    "Revisa si has recibido algún correo de seguridad relacionado con tu cuenta.",
+                    "Intenta acceder desde otro navegador o dispositivo."
+                    ],
+                    "status": "auto_resolved"
+                }}
+            }}
+
+            Ejemplo # 3: Feature request
+            ###input: Sería genial que la app tuviera modo oscuro, ¿piensan agregarlo?
+            Respuesta esperada:
+            {{
+                "support_output": {{
+                    "category": "feature_request",
+                    "priority": "low",
+                    "answer": "Gracias por tu sugerencia. El modo oscuro es una funcionalidad muy solicitada y estamos constantemente evaluando nuevas mejoras para la experiencia del usuario.",
+                    "actions": [
+                    "Mantente atento a nuestras actualizaciones en la aplicación.",
+                    "Revisa las notas de versión para conocer nuevas funcionalidades.",
+                    "Comparte tu sugerencia en nuestro canal de feedback para priorización.",
+                    "Activa notificaciones para recibir novedades del producto."
+                    ],
+                    "status": "auto_resolved"
+                }}
+            }}
+
+            Aprende de los ejemplos y aplica el patron aprendido.
+
+
+            El input del cliente o su pregunta es :
+            {user_question}
 
             Reglas:
             - "category" debe ser una de las siguientes:
@@ -35,32 +94,8 @@ def get_support_response(user_question: str) -> dict[str, Any]:
             "auto_resolved" o "needs_human_review"
             - "confidences" debe proporcionar un puntaje de confianza entre 0.0 y 1.0 para:
             "category", "priority", "answer", "actions" y "status"
-
-            Devuelve SOLO JSON válido con la siguiente estructura exacta:
-
-            {{
-            "support_output": {{
-                "confidences": {{
-                "category": 0.9,
-                "priority": 0.8,
-                "answer": 0.95,
-                "actions": 0.85,
-                "status": 0.9
-                }},
-                "category": "general",
-                "priority": "medium",
-                "answer": "Texto de respuesta profesional",
-                "actions": [
-                "Primera acción",
-                "Segunda acción",
-                "Tercera acción"
-                ],
-                "status": "needs_human_review"
-            }}
-            }}
-
-            Pregunta del cliente:
-            {user_question}
+            
+            Genera salida en el mismo formato JSON.
             """
     start_time = time.perf_counter()
     response = client.chat.completions.create(
