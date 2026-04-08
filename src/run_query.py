@@ -3,6 +3,7 @@ import json
 from llm_client import get_initial_support_response
 from feedback import feedback_response
 from refiner import refine_response
+from metrics_store import save_metrics_csv
 
 def main():
     print('Hola!, Estamos para servirle. Diganos como le podemos ayudar')
@@ -48,9 +49,19 @@ def main():
 
     print("\n" + "=" * 80)
     print("=== metricas ===")
-    print(f"Total de Tokens consumidos: {total_tokens}")
+    print(f"Total de Tokens consumidos: {total_tokens} hola, tengo problemas de ingreso a la plataforma, aparece error 400 en el link oficial de login de la pagina")
     print(f"Gastos en USD estimado: {total_usd}")
     print(f"El tiempo total de espera para obtener la respuesta fue de: {total_latency} milisegundos")
+
+    refinement_applied = should_refine
+
+    save_metrics_csv(
+        user_input=user_request,
+        total_tokens=total_tokens,
+        total_cost_usd=total_usd,
+        total_latency_ms=total_latency,  
+        refinement_applied=refinement_applied,
+    )
 
 if __name__ == '__main__':
     main()
