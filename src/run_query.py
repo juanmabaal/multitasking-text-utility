@@ -1,9 +1,9 @@
 # Entry point for running a support query against the OpenAI API.
 import json
-from llm_client import get_initial_support_response
-from feedback import feedback_response
-from refiner import refine_response
-from metrics_store import save_metrics_csv
+from src.llm_client import get_initial_support_response
+from src.feedback import feedback_response
+from src.refiner import refine_response
+from src.metrics_store import save_metrics_csv
 
 def main():
     print('Hola!, Estamos para servirle. Diganos como le podemos ayudar')
@@ -29,18 +29,22 @@ def main():
     print(json.dumps(reviewed, ensure_ascii=False, indent=2))
 
     if should_refine:
-          refined = refine_response(user_request, initial_result, reviewed)
-          final_response = refined['refined_response']
-          print("\n" + "=" * 80)
-          print("=== Refined ===")
-          print(json.dumps(refined, ensure_ascii=False, indent=2))
+        refined = refine_response(user_request, initial_result, reviewed)
+        final_response = refined['refined_response']
+        print("\n" + "=" * 80)
+        print("=== Refined ===")
+        print(json.dumps(refined, ensure_ascii=False, indent=2))
 
-          total_tokens += refined['refiner_metrics']['total_tokens']
-          total_usd += refined['refiner_metrics']['estimated_cost_usd']
-          total_latency += refined['refiner_metrics']['latency_ms']
-    
-    else: 
-         final_response = initial_result['Initial_response']
+        total_tokens += refined['refiner_metrics']['total_tokens']
+        total_usd += refined['refiner_metrics']['estimated_cost_usd']
+        total_latency += refined['refiner_metrics']['latency_ms']
+        refinement_applied = True
+    else:
+        refined = None
+        final_response = {
+        "support_output": initial_result["support_output"]
+        }
+        refinement_applied = False
     
 
     print("\n" + "=" * 80)

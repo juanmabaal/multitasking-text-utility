@@ -1,6 +1,6 @@
 from  typing import Any
-from schema import SupportResponse
-from openai_runner import call_json_and_build_metrics
+from src.schema import SupportResponse
+from src.openai_runner import call_json_and_build_metrics
 
 
 def get_initial_support_response(user_question: str) -> dict[str, Any]:
@@ -92,7 +92,7 @@ def get_initial_support_response(user_question: str) -> dict[str, Any]:
 
 
     return {
-        "Initial_response": output_dic,
+        "support_output": output_dic["support_output"],
         "initial_metrics" : initial_response['metrics']
     }
 
