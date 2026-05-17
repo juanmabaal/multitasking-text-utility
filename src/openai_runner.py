@@ -2,7 +2,7 @@ import os, json, time
 from  typing import Any
 from dotenv import load_dotenv
 from openai import OpenAI
-from metrics_logger import build_metrics
+from src.metrics_logger import build_metrics
 
 def get_client_and_model() -> tuple[OpenAI, str]:
     load_dotenv()

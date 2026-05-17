@@ -1,6 +1,6 @@
 import json
 from  typing import Any
-from openai_runner import call_json_and_build_metrics
+from src.openai_runner import call_json_and_build_metrics
 
 
 def feedback_response(user_question: str, first_response: dict[str, Any] ) -> dict[str, Any]:
@@ -63,8 +63,18 @@ def feedback_response(user_question: str, first_response: dict[str, Any] ) -> di
             """.strip()
 
     feedback_result = call_json_and_build_metrics(system_prompt, user_prompt)
+    feedback_payload = feedback_result["response"]
+
+    scores = feedback_payload["feedback_output"]["scores"]
+
+    should_refine = any(score < 0.8 for score in scores.values())
+
+    feedback_payload["feedback_output"]["should_refine"] = should_refine
+
+    if not should_refine:
+        feedback_payload["feedback_output"]["issues_detected"] = []
 
     return {
-        "feedback_response": feedback_result['response'],
-        "feedback_metrics": feedback_result['metrics']
+        "feedback_response": feedback_payload,
+        "feedback_metrics": feedback_result["metrics"]
     }
