@@ -1,0 +1,4 @@
+﻿timestamp;user_input;total_tokens;total_cost_usd;total_latency_ms;refinement_applied
+2026-05-17T00:16:40.513760;Hola tengo problemas para realizar el pago en la suscripcion, no me acepta mi tarjeta;1778;0.00039135;5215.28;False
+timestamp;user_input;total_tokens;total_cost_usd;total_latency_ms;refinement_applied
+2026-05-17T03:10:36.328789;Hola tengo problemas para realizar el pago en la suscripcion, no me acepta mi tarjeta;1783;0.00039210000000000004;7862.13;False
