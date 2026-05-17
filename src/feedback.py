@@ -3,6 +3,12 @@ from  typing import Any
 from src.openai_runner import call_json_and_build_metrics
 
 
+def should_refine_response(
+    scores: dict[str, float],
+    threshold: float = 0.8
+) -> bool:
+    return any(score < threshold for score in scores.values())
+
 def feedback_response(user_question: str, first_response: dict[str, Any] ) -> dict[str, Any]:
 
     system_prompt = (
@@ -67,7 +73,7 @@ def feedback_response(user_question: str, first_response: dict[str, Any] ) -> di
 
     scores = feedback_payload["feedback_output"]["scores"]
 
-    should_refine = any(score < 0.8 for score in scores.values())
+    should_refine = should_refine_response(scores)
 
     feedback_payload["feedback_output"]["should_refine"] = should_refine
 
