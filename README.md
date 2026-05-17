@@ -28,7 +28,7 @@ This project implements a multi-step AI pipeline that:
 
 ## 🧩 Architecture
 
-```mermaid
+```text
 User Input
     ↓
 FastAPI Endpoint / Streamlit UI
@@ -350,20 +350,21 @@ streamlit run src/streamlit_app.py
 
 #### FastAPI Swagger Docs
 
-![alt text](image.png)
+![FastAPI Swagger Docs](assets/image.png)
 
 ---
 
 #### Streamlit UI
 
-![alt text](image-1.png)
-![alt text](image-2.png)
+![Streamlit UI - Input](assets/image-1.png)
+
+![Streamlit UI - Results](assets/image-2.png)
 
 ---
 
 #### CLI Pipeline Execution
 
-![alt text](image-3.png)
+![CLI Pipeline Execution](assets/image-3.png)
 
 ---
 
