@@ -2,6 +2,15 @@
 
 import tiktoken,  os, json
 from typing import Any
+from dotenv import load_dotenv
+from src.model_pricing import MODEL_PRICING
+
+load_dotenv()
+
+model = os.getenv("OPENAI_MODEL", 'gpt-4o-mini')
+pricing = MODEL_PRICING.get(model)
+input_price_per_1m = pricing["input_per_1m"]
+output_price_per_1m = pricing["output_per_1m"]
 
 def get_token_usage_from_response(response: Any) -> dict:
     usage = getattr(response, "usage", None)
@@ -48,8 +57,8 @@ def calculate_latency_ms(start_time: float, end_time: float) -> float:
 def calculate_estimated_cost_usd(
         prompt_tokens: int,
         completion_tokens: int,
-        input_price_per_1m: float = 0.15,
-        outout_price_per_1m: float = 0.6,
+        input_price_per_1m: float = input_price_per_1m,
+        outout_price_per_1m: float = output_price_per_1m,
 ) -> float:
     
     input_cost = (prompt_tokens / 1_000_000) * input_price_per_1m
